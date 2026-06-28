@@ -359,7 +359,7 @@ const submitOrder = async () => {
   isSubmitting.value = true;
   try {
     await sentEmail(menuLines, "tyq");
-    // await sentEmail(orderText1, "yr");
+    await sentEmail(orderText1, "yr");
     clearCart();
     mobileCartOpen.value = false;
     ElMessage.success("订单提交成功，请耐心等待美味送达～");
