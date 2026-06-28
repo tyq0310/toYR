@@ -31,6 +31,14 @@
     { "id": 28, "name": "蛤蜊豆腐汤", "category": "汤羹饮品", "image": "蛤蜊豆腐汤.jpg", "price": 0, "sales": 0, "tag": "", "desc": "" },
     { "id": 29, "name": "丸子汤", "category": "汤羹饮品", "image": "丸子汤.jpg", "price": 0, "sales": 0, "tag": "", "desc": "" },
     { "id": 30, "name": "海鲜疙瘩汤", "category": "汤羹饮品", "image": "海鲜疙瘩汤.jpg", "price": 0, "sales": 0, "tag": "", "desc": "" },
-    { "id": 31, "name": "蛋花玉米羹", "category": "汤羹饮品", "image": "蛋花玉米羹.jpg", "price": 0, "sales": 0, "tag": "", "desc": "" }
+    { "id": 31, "name": "蛋花玉米羹", "category": "汤羹饮品", "image": "蛋花玉米羹.jpg", "price": 0, "sales": 0, "tag": "", "desc": "" },
+    { "id": 32, "name": "姜汁松花蛋", "category": "精致凉菜", "image": "姜汁松花蛋.jpg", "price": 0, "sales": 0, "tag": "", "desc": "" },
+    { "id": 33, "name": "拌羊脸", "category": "精致凉菜", "image": "拌羊脸.jpg", "price": 0, "sales": 0, "tag": "", "desc": "" },
+    { "id": 34, "name": "皮蛋豆腐", "category": "精致凉菜", "image": "皮蛋豆腐.jpg", "price": 0, "sales": 0, "tag": "", "desc": "" },
+    { "id": 35, "name": "芥末金针菇", "category": "精致凉菜", "image": "芥末金针菇.jpg", "price": 0, "sales": 0, "tag": "", "desc": "" },
+    { "id": 36, "name": "蔬菜沙拉", "category": "精致凉菜", "image": "蔬菜沙拉.jpg", "price": 0, "sales": 0, "tag": "", "desc": "" },
+    { "id": 37, "name": "麻汁蒜泥豆角", "category": "精致凉菜", "image": "麻汁蒜泥豆角.jpg", "price": 0, "sales": 0, "tag": "", "desc": "" },
+    { "id": 38, "name": "黄瓜拌海蜇", "category": "精致凉菜", "image": "黄瓜拌海蜇.jpg", "price": 0, "sales": 0, "tag": "", "desc": "" },
+    { "id": 39, "name": "黄瓜拌猪耳", "category": "精致凉菜", "image": "黄瓜拌猪耳.jpg", "price": 0, "sales": 0, "tag": "", "desc": "" }
   ]
 }

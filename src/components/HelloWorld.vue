@@ -41,9 +41,8 @@
           >
             <div class="dish-cover">
               <img
-                :src="dish.imageUrl"
+                v-lazy-image="dish.imageUrl"
                 :alt="dish.name"
-                loading="lazy"
                 decoding="async"
               />
               <span v-if="dish.tag">{{ dish.tag }}</span>
@@ -110,7 +109,8 @@
           <button
             class="submit-button"
             type="button"
-            :disabled="!cartItems.length"
+            :disabled="!cartItems.length || isSubmitting"
+            @click="submitOrder"
           >
             提交订单
           </button>
@@ -133,7 +133,8 @@
       <button
         class="mobile-submit-button"
         type="button"
-        :disabled="!cartItems.length"
+        :disabled="!cartItems.length || isSubmitting"
+        @click="submitOrder"
       >
         提交订单
       </button>
@@ -171,12 +172,21 @@
           <button
             class="submit-button"
             type="button"
-            :disabled="!cartItems.length"
+            :disabled="!cartItems.length || isSubmitting"
+            @click="submitOrder"
           >
             提交订单
           </button>
         </div>
       </section>
+    </div>
+
+    <div v-if="isSubmitting" class="submit-loading-mask">
+      <div class="submit-loading-card">
+        <span class="submit-loading-spinner"></span>
+        <strong>正在提交订单</strong>
+        <small>美味订单正在飞往厨房，请稍等一下～</small>
+      </div>
     </div>
   </main>
 </template>
@@ -184,9 +194,10 @@
 <script setup>
 import { computed, ref, onMounted } from "vue";
 import emailjs from "@emailjs/browser";
+import { ElMessage } from "element-plus";
 import menuData from "../data/menu.json";
 
-const dishImages = import.meta.glob("../assets/images-optimized/*", {
+const dishImages = import.meta.glob("../assets/images/*", {
   eager: true,
   query: "?url",
   import: "default",
@@ -195,34 +206,56 @@ const dishImages = import.meta.glob("../assets/images-optimized/*", {
 const categories = menuData.categories;
 const dishes = menuData.dishes.map((dish) => ({
   ...dish,
-  imageUrl: dishImages[`../assets/images-optimized/${dish.image}`],
+  imageUrl: dishImages[`../assets/images/${dish.image}`],
 }));
+
+const lazyImageObservers = new WeakMap();
+
+const observeLazyImage = (el, imageUrl) => {
+  lazyImageObservers.get(el)?.disconnect();
+  lazyImageObservers.delete(el);
+
+  if (!imageUrl) return;
+
+  if (!("IntersectionObserver" in window)) {
+    el.src = imageUrl;
+    return;
+  }
+
+  el.removeAttribute("src");
+  const observer = new IntersectionObserver(
+    ([entry]) => {
+      if (!entry.isIntersecting) return;
+      el.src = imageUrl;
+      observer.disconnect();
+      lazyImageObservers.delete(el);
+    },
+    { rootMargin: "120px 0px", threshold: 0.01 },
+  );
+
+  lazyImageObservers.set(el, observer);
+  observer.observe(el);
+};
+
+const vLazyImage = {
+  mounted(el, binding) {
+    observeLazyImage(el, binding.value);
+  },
+  updated(el, binding) {
+    if (binding.value !== binding.oldValue) {
+      observeLazyImage(el, binding.value);
+    }
+  },
+  unmounted(el) {
+    lazyImageObservers.get(el)?.disconnect();
+    lazyImageObservers.delete(el);
+  },
+};
 
 const activeCategory = ref(categories[0]);
 const cart = ref([]);
 const mobileCartOpen = ref(false);
-
-onMounted(() => {
-  // emailjs
-  //   .send(
-  //     "service_vgfwo7x", // 唐雨强的qq授权id
-  //     // "service_geuaxkt", // 闫茹的163授权id
-  //     "template_o73uu26", // 发给唐
-  //     // "template_6phm208", // 发给闫
-  //     {
-  //       name: "闫茹",
-  //       message: "测试留言1",
-  //       time: getNowTime(),
-  //     },
-  //     "-IRUQuTGQ8XFTDZav", // PUBLIC_KEY
-  //   )
-  //   .then((result) => {
-  //     console.log("发送成功", result.text);
-  //   })
-  //   .catch((error) => {
-  //     console.log("发送失败", error.text);
-  //   });
-});
+const isSubmitting = ref(false);
 
 const getNowTime = () => {
   const now = new Date();
@@ -294,6 +327,65 @@ const decreaseDish = (id) => {
 const clearCart = () => {
   cart.value = [];
 };
+
+const submitOrder = async () => {
+  if (!cartItems.value.length || isSubmitting.value) return "";
+
+  const menuLines = cartItems.value
+    .map((item, index) => `${index + 1}. ${item.name} × ${item.quantity} 份`)
+    .join("\n");
+
+  const orderText1 = [
+    "🌷 亲爱的闫茹女士：",
+    "",
+    "您的小饭桌订单已经成功提交啦～",
+    "厨房正在认真准备每一道菜，请稍等片刻呀！",
+    "",
+    "🍽️ 今日菜单",
+    "————————————",
+    menuLines,
+    "————————————",
+    "",
+    "📋 订单小计",
+    `共计：${totalCount.value} 份`,
+    `合计：￥${totalPrice.value}`,
+    "",
+    "⏰ 温馨提示",
+    "美味正在向您奔来，请耐心等候，稍后为您送达～",
+    "愿这一餐热气腾腾，也愿您今天有个好心情！✨",
+    "",
+  ].join("\n");
+
+  isSubmitting.value = true;
+  try {
+    await sentEmail(menuLines, "tyq");
+    // await sentEmail(orderText1, "yr");
+    clearCart();
+    mobileCartOpen.value = false;
+    ElMessage.success("订单提交成功，请耐心等待美味送达～");
+  } catch (error) {
+    ElMessage.error("订单提交失败，请稍后再试");
+  } finally {
+    isSubmitting.value = false;
+  }
+
+  return orderText1;
+};
+
+const sentEmail = (message, name) => {
+  let template = name == "tyq" ? "template_o73uu26" : "template_6phm208";
+  return emailjs.send(
+    "service_vgfwo7x", // 唐雨强的qq授权id
+    // "service_geuaxkt", // 闫茹的163授权id
+    template, // 发给唐
+    // "template_6phm208", // 发给闫
+    {
+      message: message.replace(/\n/g, "<br />"),
+      time: getNowTime(),
+    },
+    "-IRUQuTGQ8XFTDZav", // PUBLIC_KEY
+  );
+};
 </script>
 
 <style scoped lang="scss">
@@ -305,13 +397,11 @@ const clearCart = () => {
   overflow: hidden;
   padding: 28px;
   color: #1f2933;
-  background:
-    linear-gradient(
-      135deg,
-      rgba(255, 247, 237, 0.92),
-      rgba(236, 253, 245, 0.88)
-    ),
-    url("https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1600&q=80");
+  background: linear-gradient(
+    135deg,
+    rgba(255, 247, 237, 0.92),
+    rgba(236, 253, 245, 0.88)
+  );
   background-size: cover;
   background-position: center;
   font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
@@ -433,6 +523,7 @@ const clearCart = () => {
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
+  background: #f3f4f6;
 }
 
 .panel-title {
@@ -663,6 +754,55 @@ const clearCart = () => {
   &:disabled {
     cursor: not-allowed;
     background: #d1d5db;
+  }
+}
+
+.submit-loading-mask {
+  display: grid;
+  place-items: center;
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  padding: 20px;
+  background: rgba(17, 24, 39, 0.46);
+  backdrop-filter: blur(4px);
+}
+
+.submit-loading-card {
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  width: min(300px, 82vw);
+  padding: 28px 22px;
+  box-sizing: border-box;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 20px 50px rgba(17, 24, 39, 0.28);
+  text-align: center;
+
+  strong {
+    color: #111827;
+    font-size: 19px;
+  }
+
+  small {
+    color: #6b7280;
+    line-height: 1.5;
+  }
+}
+
+.submit-loading-spinner {
+  width: 34px;
+  height: 34px;
+  border: 4px solid #fde7cc;
+  border-top-color: #b45309;
+  border-radius: 50%;
+  animation: submit-loading-spin 0.8s linear infinite;
+}
+
+@keyframes submit-loading-spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 

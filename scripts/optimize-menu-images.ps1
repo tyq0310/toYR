@@ -1,9 +1,9 @@
 param(
   [string]$SourceDir = "src/assets/images",
   [string]$OutputDir = "src/assets/images-optimized",
-  [int]$MaxWidth = 720,
-  [int]$MaxHeight = 720,
-  [int]$Quality = 72
+  [int]$MaxWidth = 480,
+  [int]$MaxHeight = 480,
+  [int]$Quality = 58
 )
 
 $ErrorActionPreference = "Stop"
