@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "optimize:images": "powershell -ExecutionPolicy Bypass -File scripts/optimize-menu-images.ps1",
     "deploy": "gh-pages -d dist",
     "build": "vite build",
     "preview": "vite preview"

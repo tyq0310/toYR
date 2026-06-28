@@ -39,7 +39,13 @@
             :key="dish.id"
             class="dish-card"
           >
-            <div class="dish-cover" :style="{ background: dish.cover }">
+            <div class="dish-cover">
+              <img
+                :src="dish.imageUrl"
+                :alt="dish.name"
+                loading="lazy"
+                decoding="async"
+              />
               <span v-if="dish.tag">{{ dish.tag }}</span>
             </div>
             <div class="dish-content">
@@ -180,7 +186,7 @@ import { computed, ref, onMounted } from "vue";
 import emailjs from "@emailjs/browser";
 import menuData from "../data/menu.json";
 
-const dishImages = import.meta.glob("../assets/images/*", {
+const dishImages = import.meta.glob("../assets/images-optimized/*", {
   eager: true,
   query: "?url",
   import: "default",
@@ -189,7 +195,7 @@ const dishImages = import.meta.glob("../assets/images/*", {
 const categories = menuData.categories;
 const dishes = menuData.dishes.map((dish) => ({
   ...dish,
-  cover: `url("${dishImages[`../assets/images/${dish.image}`]}") center / cover no-repeat`,
+  imageUrl: dishImages[`../assets/images-optimized/${dish.image}`],
 }));
 
 const activeCategory = ref(categories[0]);
@@ -485,14 +491,22 @@ const clearCart = () => {
 }
 
 .dish-cover {
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-end;
+  position: relative;
   height: 150px;
-  padding: 10px;
   box-sizing: border-box;
+  overflow: hidden;
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 
   span {
+    position: absolute;
+    top: 10px;
+    right: 10px;
     padding: 5px 9px;
     border-radius: 999px;
     color: #fff;
@@ -748,7 +762,11 @@ const clearCart = () => {
 
   .dish-cover {
     height: 100%;
-    padding: 6px;
+
+    span {
+      top: 6px;
+      right: 6px;
+    }
   }
 
   .dish-content {
